@@ -1,0 +1,11 @@
+[package]
+name = "patchwork"
+version = "0.1.0"
+authors = ["Matthew Hammer <Matthew.Hammer@Colorado.Edu>"]
+edition = "2018"
+
+[dependencies]
+adapton = "0.3"
+fungi-lang = "0.1"
+#fungi-lang = { path = "../fungi-lang.rust" }
+regex = "0.2"
