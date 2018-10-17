@@ -29,14 +29,17 @@ fgi_mod!{
         #q. #loc. ret q
     }
 
+    // TODO: This type should return an Inv with an existentially-bound set of names
     fn visit_loc : (Thk[0] foralli (X):NmSet.
                     0 Inv[X] -> 
                     0 Loc -> 
                     0 F VisitRes[X]) = {
         #inv.#loc.
+        // TODO
         ret inj1 ()
     }
     
+    // TODO: This type should return an Inv with an existentially-bound set of names
     fn visit_queue : (Thk[0] foralli (X):NmSet.
                       0 Inv[X] ->
                       0 Queue ->
