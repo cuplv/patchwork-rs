@@ -1,7 +1,63 @@
 #[macro_use] extern crate fungi_lang;
 
 fgi_mod!{
-    /// TODO -- Define the type definitions and analysis loop here    
+    /// Rust-based representations of program locations and abstract
+    /// states.
+    type Loc;
+    type AbsState;
+
+    /// Rust-based representation of a finite map.
+    /// (eventually, use finer-grained representation of map updates).
+    /// The finite map associates each program location with an abstract state.
+    type Map;
+    type Queue;
+    
+    /// Invariant map; the type tracks the set of update names
+    type Inv = (foralli (X):NmSet. Map);
+    
+    /// The result of visiting a location: 
+    /// Either: no change, or an updated invariant map
+    type VisitRes = (foralli (X):NmSet. (+ Unit + Inv[X]));
+
+    fn queue_pop : (Thk[0] 0 Queue -> 0 F (+ Unit + (x Queue x Loc))) = {
+        // TODO
+        #q. ret inj1 ()
+    }
+
+    fn queue_push_succs : (Thk[0] 0 Queue -> 0 Loc -> 0 F Queue) = {
+        // TODO
+        #q. #loc. ret q
+    }
+
+    fn visit_loc : (Thk[0] foralli (X):NmSet.
+                    0 Inv[X] -> 
+                    0 Loc -> 
+                    0 F VisitRes[X]) = {
+        #inv.#loc.
+        ret inj1 ()
+    }
+    
+    fn visit_queue : (Thk[0] foralli (X):NmSet.
+                      0 Inv[X] ->
+                      0 Queue ->
+                      0 F Inv[X]) = {
+        #inv.#q.
+        let m = {{force queue_pop} q}
+        match m {
+            _u => {ret inv}
+            q_loc => { 
+                let (q, loc) = {ret q_loc}
+                let m = {{force visit_loc}[X] inv loc}
+                match m {
+                    _u  => {{force visit_queue}[X] inv q}
+                    inv => {
+                        let q = {{force queue_push_succs} q loc}
+                        {{force visit_queue}[X] inv q}
+                    }
+                }
+            }            
+        }    
+    }
 }
 
 
