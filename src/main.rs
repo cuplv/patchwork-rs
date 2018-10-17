@@ -19,6 +19,12 @@ fgi_mod!{
     /// Either: no change, or an updated invariant map
     type VisitRes = (foralli (X):NmSet. (+ Unit + Inv[X]));
 
+    /// create the initial queue
+    fn queue_init : (Thk[0] 0 F Queue)  = { unsafe (0) trapdoor::queue_init }
+    
+    /// create the initial invariant map
+    fn inv_init : (Thk[0] 0 F Inv[0]) = { unsafe (0) trapdoor::inv_init }
+
     fn queue_pop : (Thk[0] 0 Queue -> 0 F (+ Unit + (x Queue x Loc))) = {
         // TODO
         #q. ret inj1 ()
@@ -27,7 +33,7 @@ fgi_mod!{
     fn queue_push_succs : (Thk[0] 0 Queue -> 0 Loc -> 0 F Queue) = {
         // TODO
         #q. #loc. ret q
-    }
+    }    
 
     // TODO: This type should return an Inv with an existentially-bound set of names
     fn visit_loc : (Thk[0] foralli (X):NmSet.
@@ -59,7 +65,20 @@ fgi_mod!{
                     }
                 }
             }            
-        }    
+        }
+    }
+}
+
+pub mod trapdoor {
+    // This code essentially extends the Fungi evaluator from within Patchwork.
+    use fungi_lang::dynamics::{RtVal,ExpTerm};
+    //use super::*;
+    
+    pub fn queue_init(_args:Vec<RtVal>) -> ExpTerm {
+        unimplemented!()
+    }
+    pub fn inv_init(_args:Vec<RtVal>) -> ExpTerm {
+        unimplemented!()
     }
 }
 
@@ -70,7 +89,6 @@ fn main() {
 
 
 pub mod test {
-
     /*  Try this:
      *  $ cargo test::typing 2>&1 | less -R
      *
@@ -78,7 +96,11 @@ pub mod test {
     #[test]
     pub fn typing() { fgi_listing_test!{
         open crate;
-        ret 0
+        let inv = {force inv_init}
+        // todo: load the program graph; put entry nodes into q
+        let q = {force queue_init} 
+        let res = {{force visit_queue} [0] inv q}
+        ret res
     }}
     
     /*  Try this:
@@ -92,65 +114,3 @@ pub mod test {
         ret 0
     }}
 }
-
-
-////////////////////////////////////////////////////////////////////////
-// For reference: Some list-processing tests
-pub mod test_list {
-
-    /*  Try this:
-     *  $ cargo test test_list::typing 2>&1 | less -R
-     *
-     */    
-    #[test]
-    pub fn typing() { fgi_listing_test!{
-        open fungi_lang::examples::list_nat;
-        ret 0
-    }}
-
-    /*  Try this:
-     *  $ export FUNGI_VERBOSE_REDUCE=1
-     *  $ cargo test test_list::reduction -- --nocapture | less -R
-     *
-     */
-    #[test]
-    pub fn reduction() { fgi_dynamic_trace!{
-        [Expect::SuccessXXX]
-        open fungi_lang::examples::list_nat;
-        open fungi_lang::examples::list_nat_edit;
-        open fungi_lang::examples::list_nat_reverse;
-        
-        /// Generate input
-        let list1  = {ws (@@gen) {{force gen} 10}}
-
-        /// Allocate nil ref cell
-        let refnil = {ref (@@nil) roll inj1 ()}
-
-        /// Allocate archivist thunk: when forced, it reverses the input list
-        let t = {ws (@@archivst) thk (@@comp) {
-            let list2 = {{force reverse} {!list1} refnil (@@revres)}
-            ret (list1, list2)
-        }}
-
-        /// Initial run
-        let outs_1 = {force t}
-
-        /// First change: Insert name 666, element 666 after name 5
-        let b1 = {
-            {force insert_after}[?] (@5) (@666) 666 {!list1}
-        }
-
-        /// Re-force archivist; Precipitates change propagation
-        let outs_2 = {force t}
-
-        /// Second change: Remove inserted name 666, and element 666
-        let b2 = {
-            {force remove_after}[?] (@5) {!list1}
-        }
-
-        /// Re-force archivist; Precipitates change propagation
-        let outs_3 = {force t}
-        ret (b1, b2)
-    }}
-}
-
