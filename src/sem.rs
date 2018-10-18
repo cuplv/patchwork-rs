@@ -8,6 +8,9 @@ fgi_mod!{
     /// Analysis context, e.g., a program location
     type Ctx; // := Host(rep::Ctx)
 
+    /// Analysis context set (or list, or collection, etc)
+    type Ctxs; // := Host(rep::Ctxs)
+
     /// Abstract state, e.g., an invariant that is (locally) true
     type AbsState; // := Host(rep::AbsState)
 }
@@ -18,8 +21,11 @@ pub mod rep {
 
     /// (abstract) program expressions
     pub enum Exp {
+        /// Constant number
         Num(usize),
+        /// (Program) variable
         Var(String),
+        /// e1 + e2
         Plus(RecExp,RecExp),
     }
     pub type RecExp = Rc<Exp>;
@@ -27,13 +33,20 @@ pub mod rep {
     /// formula: propositions in the ambient logic that talk about program
     /// expressions.
     pub enum Formula {
-        Tt, Conj(RecFormula, RecFormula),
-        Ineq(Exp,Exp)
+        /// Tautology
+        Tt, 
+        /// Conjunction
+        Conj(RecFormula, RecFormula),
+        /// e1 <= e2
+        Lte(Exp,Exp)
     }
     pub type RecFormula = Rc<Formula>;
     
     /// Analysis context := program location (a unique number)
     pub type Ctx = usize;
+
+    /// Analysis context set := vector of program locations
+    pub type Ctxs = Vec<usize>;
 
     /// abstract state: a proposition (a logical formula) that
     /// summarizes how the program variables are related

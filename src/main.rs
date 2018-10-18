@@ -2,12 +2,16 @@
 #[macro_use] extern crate fungi_lang;
 
 pub mod sem;
+pub mod cfg;
 pub mod inv;
 pub mod queue;
 
 fgi_mod!{
     /// Program semantics and representation
     open crate::sem;
+
+    /// define CFG relations between program contexts: successors, predecessors
+    open crate::cfg;
 
     /// Invariant map representation
     open crate::inv;
@@ -24,11 +28,11 @@ fgi_mod!{
 
 
     // TODO: This type should return an Inv with an existentially-bound set of names
-    fn visit_loc : (Thk[0] foralli (X):NmSet.
+    fn visit_ctx : (Thk[0] foralli (X):NmSet.
                     0 Inv[X] -> 
                     0 Ctx -> 
                     0 F VisitRes[X]) = {
-        #inv.#loc.
+        #inv.#ctx.
         // TODO
         ret inj1 ()
     }
@@ -41,14 +45,15 @@ fgi_mod!{
         #inv.#q.
         let m = {{force queue_pop} q}
         match m {
-            _u => {ret inv}
-            q_loc => { 
-                let (q, loc) = {ret q_loc}
-                let m = {{force visit_loc}[X] inv loc}
+            /* None */ _u => {ret inv}
+            /* Some */ q_ctx => { 
+                let (q, ctx) = {ret q_ctx}
+                let m = {{force visit_ctx}[X] inv ctx}
                 match m {
-                    _u  => {{force visit_queue}[X] inv q}
-                    inv => {
-                        let q = {{force queue_push_succs} q loc}
+                    /* NoChange */ _u  => {{force visit_queue}[X] inv q}
+                    /* Changed */  inv => {
+                        let ctxs = {{force ctx_succs} ctx}
+                        let q    = {{force queue_push_all} q ctxs}
                         {{force visit_queue}[X] inv q}
                     }
                 }
@@ -68,7 +73,7 @@ pub mod test {
         open crate;
         let inv = {force inv_init}
         // todo: load the program graph; put entry nodes into q
-        let q = {force queue_init} 
+        let q = {force queue_empty} 
         let res = {{force visit_queue} [0] inv q}
         ret res
     }}
@@ -83,7 +88,7 @@ pub mod test {
         open crate;
         let inv = {force inv_init}
         // todo: load the program graph; put entry nodes into q
-        let q = {force queue_init} 
+        let q = {force queue_empty} 
         let res = {{force visit_queue} [0] inv q}
         ret 0
     }}
