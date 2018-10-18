@@ -1,10 +1,14 @@
 #![recursion_limit="128"]
 #[macro_use] extern crate fungi_lang;
 
+pub mod sem;
 pub mod inv;
 pub mod queue;
 
 fgi_mod!{
+    /// Program semantics and representation
+    open crate::sem;
+
     /// Invariant map representation
     open crate::inv;
     
@@ -14,7 +18,7 @@ fgi_mod!{
     /// Transfer function (of the program analysis)
     /// -------------------------------------------
 
-    /// The result of visiting a location: 
+    /// The result of visiting the next analysis context:
     /// Either: no change, or an updated invariant map
     type VisitRes = (foralli (X):NmSet. (+ Unit + Inv[X]));
 
@@ -22,7 +26,7 @@ fgi_mod!{
     // TODO: This type should return an Inv with an existentially-bound set of names
     fn visit_loc : (Thk[0] foralli (X):NmSet.
                     0 Inv[X] -> 
-                    0 Loc -> 
+                    0 Ctx -> 
                     0 F VisitRes[X]) = {
         #inv.#loc.
         // TODO

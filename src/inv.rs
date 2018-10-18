@@ -1,69 +1,48 @@
-
-// Rust-based representations of the program to analyze, and its analysis state
-pub mod rep {
-    use std::rc::Rc;
-
-    /// (abstract) program expressions
-    pub enum Exp {
-        Num(usize),
-        Var(String),
-        Plus(RecExp,RecExp),
-    }
-    pub type RecExp = Rc<Exp>;
-    
-    /// formula: propositions in the ambient logic that talk about program
-    /// expressions.
-    pub enum Formula {
-        Tt, Conj(RecFormula, RecFormula),
-        Ineq(Exp,Exp)
-    }
-    pub type RecFormula = Rc<Formula>;
-    
-    /// program location
-    pub type Loc = usize;
-
-    /// abstract state: local to a program location, sometime during
-    /// the program analysis.
-    pub type AbsState = Formula;
-}
-
 fgi_mod!{
+    open crate::sem;
+
     /// Invariant map representation
     /// ----------------------------
 
-    /// Rust-based representations of program locations and abstract
-    /// states.
-    type Loc; // := Host(rep::Loc)
-    type AbsState; // := Host(rep::AbsState)
-
     /// Rust-based representation of a finite map.
     /// (eventually, use finer-grained representation of map updates).
-    /// The finite map associates each program location with an abstract state.
+    /// The finite map associates each distinct analysis context with an abstract state.
     type Map;
     
-    /// Invariant map; the type tracks the set of named update operations
+    /// Invariant map; the refinement type tracks the set of named update operations
     type Inv = (foralli (X):NmSet. Map);
     
     /// create the initial invariant map; no updates yet; names := empty set
     fn inv_init : (Thk[0] 0 F Inv[0]) = { unsafe (0) trapdoor::inv_init }
     
-    /// update the abstract state at a particular location in the invariant map
+    /// update the abstract state at a particular context in the invariant map
     fn inv_update : (
-        Thk[0] foralli (X,Y):NmSet | ((X%Y):NmSet).
-            0 Inv[X] -> 0 Nm[Y] -> 0 Loc -> 0 AbsState -> 0 F Inv[X%Y]
+        Thk[0] foralli (X,Y,XY):NmSet | ((X%Y)=XY:NmSet).
+            0 Inv[X] -> 0 Nm[Y] -> 0 Ctx -> 0 AbsState -> 0 F Inv[X%Y]
     ) = { 
         unsafe (4) trapdoor::inv_update
     }
 
-    /// project a particular location's abstract state from the invariant map
+    /// project a particular context's abstract state from the invariant map
     fn inv_get : (
         Thk[0] foralli (X):NmSet.
-            0 Inv[X] -> 0 Loc -> 0 F AbsState
+            0 Inv[X] -> 0 Ctx -> 0 F AbsState
     ) = {
         unsafe (2) trapdoor::inv_get
     }
 
 }
+
+
+/*  Try this:
+ *  $ cargo inv::typing 2>&1 | less -R
+ *
+ */    
+#[test]
+pub fn typing() { fgi_listing_test!{
+    open crate::inv;
+    ret 0
+}}
 
 /// Trapdoor into Fungi's dynamic semantics.
 /// 
