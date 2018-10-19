@@ -58,7 +58,7 @@ pub mod trapdoor {
     use fungi_lang::dynamics::{RtVal,ExpTerm,ret};
     use fungi_lang::hostobj::{rtval_of_obj, obj_of_rtval};
     //use super::*;
-    use crate::sem::rep::{Ctx,AbsState, bottom};
+    use crate::sem::rep::{Ctx,domain::{AbsState,bottom}};
 
     #[derive(Clone,Debug,Eq,PartialEq)]
     pub struct Map ( HashMap<Ctx,AbsState> );

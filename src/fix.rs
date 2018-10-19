@@ -58,8 +58,7 @@ fgi_mod!{
 
     // TODO: This return type needs an existential quantifier
     fn run : (Thk[0] 0 F Inv[0]) = {
-        let inv  = {force inv_init}
-        // todo: load the program graph; put entry nodes into q
+        let inv  = {{force inv_init}}
         let ctxs = {{force entry_ctxs}}
         let q    = {{force queue_empty}}
         let q    = {{force queue_push_all} q ctxs}
