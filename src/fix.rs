@@ -24,9 +24,18 @@ fgi_mod!{
                     0 Ctx -> 
                     0 F VisitRes[X]) = {
         #inv.#ctx.
-        /// Do visit
-        // TODO
-        ret inj2 inv
+        let s1    : AbsState = {{force inv_get} inv ctx}
+        let preds : Preds    = {{force ctx_preds} ctx}
+        /// Join
+        let join  : AbsState = {{force inv_join} inv preds ctx}
+        if {{force domain_eq} s1 join} {
+            ret inj1 ()
+        } else {
+            // TODO: Choose a name somehow; do the (named) update.
+            /// Update
+            let inv = {{force inv_update} inv @1 ctx join}
+            ret inj2 inv
+        }
     }
 
     /// Fixed-point computation, via a work list algorithm
@@ -59,7 +68,8 @@ fgi_mod!{
     // TODO: This return type needs an existential quantifier
     fn run : (Thk[0] 0 F Inv[0]) = {
         let inv  = {{force inv_init}}
-        let ctxs = {{force entry_ctxs}}
+        //let ctxs = {{force entry_ctxs}}
+        let ctxs = {{force all_ctxs}}
         let q    = {{force queue_empty}}
         let q    = {{force queue_push_all} q ctxs}
         let res  = {{force do_work_queue} [0] inv q}

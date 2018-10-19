@@ -31,6 +31,14 @@ fgi_mod!{
         unsafe (2) trapdoor::inv_get
     }
 
+    /// Perform the transfer function on the given 
+    fn inv_join : (
+        Thk[0] foralli (X):NmSet.
+            0 Inv[X] -> 0 Preds -> 0 Ctx -> 0 F AbsState
+    ) = {
+        unsafe (3) trapdoor::inv_join
+    }
+
 }
 
 
@@ -58,21 +66,34 @@ pub mod trapdoor {
     use fungi_lang::dynamics::{RtVal,ExpTerm,ret};
     use fungi_lang::hostobj::{rtval_of_obj, obj_of_rtval};
     //use super::*;
-    use crate::sem::rep::{Ctx,domain::{AbsState,bottom}};
+    use crate::sem::rep::{Ctx,Ctxs,Preds,domain::{AbsState,bottom,join,transfer}};
 
     #[derive(Clone,Debug,Eq,PartialEq)]
     pub struct Map ( HashMap<Ctx,AbsState> );
     
     impl Map {
-        fn get(&self, ctx:Ctx) -> AbsState {
+        fn get(&self, ctx:&Ctx) -> AbsState {
             let r = self.0.get( &ctx ).map(|x|x.clone());
             match r {
-                None    => bottom(),
+                None    => bottom(&ctx),
                 Some(s) => s
             }
         }
+        fn join(&self, preds:Preds, ctx:Ctx) -> AbsState {
+            let mut s = None;
+            for (pred_ctx, pred_stmt) in preds.iter() {
+                let s1 = self.get(pred_ctx);
+                let s2 = transfer(s1, pred_ctx, pred_stmt);
+                s = s.map(|s| join(s, s2));
+            }
+            match s {
+                // Do not call bottom unless there are no predecessors at all
+                None    => bottom(&ctx),
+                Some(s) => s,
+            }
+        }
         fn update(&mut self, ctx:Ctx, s:AbsState) {
-            *self.0.entry( ctx ).or_insert( bottom() ) = s;
+            *self.0.entry( ctx ).or_insert( bottom(&ctx) ) = s;
         }
     }
 
@@ -98,8 +119,16 @@ pub mod trapdoor {
     pub fn inv_get(args:Vec<RtVal>) -> ExpTerm {
         assert_eq!(args.len(), 2);
         let inv : Map = obj_of_rtval( &args[0] ).unwrap();
-        let loc : Ctx = obj_of_rtval( &args[1] ).unwrap();
-        ret(rtval_of_obj(inv.get(loc)))
+        let ctx : Ctx = obj_of_rtval( &args[1] ).unwrap();
+        ret(rtval_of_obj(inv.get(&ctx)))
+    }
+
+    pub fn inv_join(args:Vec<RtVal>) -> ExpTerm {
+        assert_eq!(args.len(), 3);
+        let inv   : Map   = obj_of_rtval( &args[0] ).unwrap();
+        let preds : Preds = obj_of_rtval( &args[1] ).unwrap();
+        let ctx   : Ctx   = obj_of_rtval( &args[2] ).unwrap();
+        ret(rtval_of_obj( inv.join(preds, ctx) ))
     }
     
     pub fn inv_update(args:Vec<RtVal>) -> ExpTerm {
