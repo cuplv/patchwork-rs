@@ -14,7 +14,7 @@ fgi_mod!{
 
 
 /*  Try this:
- *  $ cargo cfg::typing 2>&1 | less -R
+ *  $ cargo test cfg::typing 2>&1 | less -R
  *
  */    
 #[test]

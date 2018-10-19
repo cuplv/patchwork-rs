@@ -69,7 +69,7 @@ fgi_mod!{
 
 
 /*  Try this:
- *  $ cargo test::typing 2>&1 | less -R
+ *  $ cargo test fix::typing 2>&1 | less -R
  *
  */    
 #[test]

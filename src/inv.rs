@@ -44,6 +44,9 @@ pub fn typing() { fgi_listing_test!{
     ret 0
 }}
 
+
+/////////////////////////////////////////////////////////////////////////////////////
+
 /// Trapdoor into Fungi's dynamic semantics.
 /// 
 /// This module defines operations on our new Patchwork-specific types
