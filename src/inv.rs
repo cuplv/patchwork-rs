@@ -49,35 +49,67 @@ pub fn typing() { fgi_listing_test!{
 
 /// Trapdoor into Fungi's dynamic semantics.
 /// 
-/// This module defines operations on our new Patchwork-specific types
-/// (work queues and invariant maps) by extending the Fungi
-/// evaluator's semantics, but from within this crate (Patchwork).
+/// This module defines operations on invariant maps by extending the
+/// Fungi evaluator's semantics, but from within this (Patchwork) crate.
 ///
 pub mod trapdoor {
+    use std::collections::{HashMap};
+    use std::hash::{Hash, Hasher};
     use fungi_lang::dynamics::{RtVal,ExpTerm,ret};
     use fungi_lang::hostobj::{rtval_of_obj, obj_of_rtval};
     //use super::*;
+    use crate::sem::rep::{Ctx,AbsState, bottom};
 
+    #[derive(Clone,Debug,Eq,PartialEq)]
+    pub struct Map ( HashMap<Ctx,AbsState> );
+    
+    impl Map {
+        fn get(&self, ctx:Ctx) -> AbsState {
+            let r = self.0.get( &ctx ).map(|x|x.clone());
+            match r {
+                None    => bottom(),
+                Some(s) => s
+            }
+        }
+        fn update(&mut self, ctx:Ctx, s:AbsState) {
+            *self.0.entry( ctx ).or_insert( bottom() ) = s;
+        }
+    }
+
+    // This representation does not permit an efficient O(1)-time hash operation.
+    impl Hash for Map {        
+        fn hash<H:Hasher>(&self, h: &mut H) {
+            // Take O(n log n) time to sort keys, and hash each key-value pair
+            let mut keys : Vec<Ctx> = 
+                self.0.keys().map(|x|x.clone()).into_iter().collect();
+            keys.sort();
+            for k in keys {
+                k.hash(h);
+                self.0.get(&k).hash(h);
+            }
+        }
+    }
+        
     pub fn inv_init(_args:Vec<RtVal>) -> ExpTerm {
-        ret(rtval_of_obj( () )) //TODO -- represent empty mapping
+        let inv : Map = Map(HashMap::new());
+        ret(rtval_of_obj( inv ))
     }
 
     pub fn inv_get(args:Vec<RtVal>) -> ExpTerm {
-        let inv : () = obj_of_rtval( &args[0] ).unwrap();
-        let loc : () = obj_of_rtval( &args[1] ).unwrap();
-        // TODO -- project from the mapping
-        drop((inv,loc));
-        ret(rtval_of_obj( () ))
+        assert_eq!(args.len(), 2);
+        let inv : Map = obj_of_rtval( &args[0] ).unwrap();
+        let loc : Ctx = obj_of_rtval( &args[1] ).unwrap();
+        ret(rtval_of_obj(inv.get(loc)))
     }
     
     pub fn inv_update(args:Vec<RtVal>) -> ExpTerm {
-        let inv : () = obj_of_rtval( &args[0] ).unwrap();
-        let nm  : () = obj_of_rtval( &args[1] ).unwrap();
-        let loc : () = obj_of_rtval( &args[2] ).unwrap();
-        let st  : () = obj_of_rtval( &args[3] ).unwrap();
-        // TODO -- update representation of the mapping
-        drop((inv,nm,loc,st));
-        ret(rtval_of_obj( () ))
+        assert_eq!(args.len(), 4);
+        let mut inv : Map  = obj_of_rtval( &args[0] ).unwrap();
+        //let nm  : RtVal    = obj_of_rtval( &args[1] ).unwrap();
+        let ctx : Ctx      = obj_of_rtval( &args[2] ).unwrap();
+        let st  : AbsState = obj_of_rtval( &args[3] ).unwrap();
+        inv.update(ctx, st);
+        ret(rtval_of_obj( inv ))
     }
 }
 

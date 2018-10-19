@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 adapton = "0.3"
-fungi-lang = "0.1"
-#fungi-lang = { path = "../fungi-lang.rust" }
+#fungi-lang = "0.1"
+fungi-lang = { path = "../fungi-lang.rust" }
 regex = "0.2"

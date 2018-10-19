@@ -44,9 +44,9 @@ pub fn typing() { fgi_listing_test!{
 
 /// Trapdoor into Fungi's dynamic semantics.
 /// 
-/// This module defines operations on our new Patchwork-specific types
-/// (work queues and invariant maps) by extending the Fungi
-/// evaluator's semantics, but from within this crate (Patchwork).
+/// This module defines operations on work queues by extending the
+/// Fungi evaluator's semantics, but from within this (Patchwork)
+/// crate.
 ///
 pub mod trapdoor {
     use std::rc::Rc;
@@ -54,25 +54,50 @@ pub mod trapdoor {
     use fungi_lang::hostobj::{rtval_of_obj, obj_of_rtval};
     use crate::sem::rep::{Ctx,Ctxs};
 
-    pub type Queue = Vec<Ctx>;
+    #[derive(Clone,Debug,Eq,PartialEq,Hash)]
+    pub struct Queue( Vec<Ctx> );
+    
+    impl Queue {
+        fn push(&mut self, ctx:Ctx) {
+            // Before pusing, check to see if the context is already in the queue
+            let found = {
+                let mut found = false;
+                for q_ctx in self.0.iter() { 
+                    if q_ctx == &ctx { 
+                        found = true; 
+                        break 
+                    }
+                };
+                found
+            };
+            if ! found {
+                self.0.push( ctx );
+            };
+        }
+        fn push_all(&mut self, ctxs:Ctxs) {
+            for ctx in ctxs {
+                self.push(ctx)
+            }
+        }
+    }
 
     pub fn queue_empty(args:Vec<RtVal>) -> ExpTerm {
         assert_eq!(args.len(), 0);
-        let emp : Queue = vec![];
+        let emp : Queue = Queue( vec![] );
         ret(rtval_of_obj( emp ))
     }
 
     pub fn queue_sing(args:Vec<RtVal>) -> ExpTerm {
         assert_eq!(args.len(), 1);
         let ctx  : Ctx = obj_of_rtval( &args[1] ).unwrap();
-        let sing : Queue = vec![ ctx ];
+        let sing : Queue = Queue( vec![ ctx ] );
         ret(rtval_of_obj( sing ))
     }
     
     pub fn queue_pop(args:Vec<RtVal>) -> ExpTerm {
         assert_eq!(args.len(), 1);
         let mut q : Queue = obj_of_rtval( &args[0] ).unwrap();
-        match q.pop() {
+        match q.0.pop() {
             None    => ret(RtVal::Inj1(Rc::new(RtVal::Unit))),
             Some(v) => {
                 ret(RtVal::Inj2(Rc::new(
@@ -92,9 +117,9 @@ pub mod trapdoor {
     }
 
     pub fn queue_push_all(args:Vec<RtVal>) -> ExpTerm {
-        let mut q    : Queue = obj_of_rtval( &args[0] ).unwrap();
-        let mut ctxs : Ctxs  = obj_of_rtval( &args[1] ).unwrap();
-        q.append( &mut ctxs );
+        let mut q : Queue = obj_of_rtval( &args[0] ).unwrap();
+        let ctxs  : Ctxs  = obj_of_rtval( &args[1] ).unwrap();
+        q.push_all( ctxs );
         ret(rtval_of_obj( q ))
     }
 }

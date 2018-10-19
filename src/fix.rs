@@ -24,8 +24,9 @@ fgi_mod!{
                     0 Ctx -> 
                     0 F VisitRes[X]) = {
         #inv.#ctx.
+        /// Do visit
         // TODO
-        ret inj1 ()
+        ret inj2 inv
     }
 
     /// Fixed-point computation, via a work list algorithm
