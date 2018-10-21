@@ -40,6 +40,7 @@ fgi_mod!{
             ret inj1 ()
         } else {
             // TODO: Choose a name somehow; do the (named) update.
+            // (e.g., the name could be '(ctx,join)' --- a distinct name not already in X1).
             let nm = {ret (name @1)}
             let inv = {
                 {force inv_update}[X1][{@1}][X1%{@1}] 
