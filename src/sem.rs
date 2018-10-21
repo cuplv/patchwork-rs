@@ -1,3 +1,6 @@
+use crate::sem::domain::{AbsState};
+use crate::sem::rep::{Stmt,Ctx};
+
 fgi_mod!{
     /// Program representation and semantics
     /// -------------------------------------
@@ -18,11 +21,16 @@ fgi_mod!{
     type Preds; // := Host(rep::Preds);
 
     /// Abstract state, e.g., an invariant that is (locally) true
-    type AbsState; // := Host(rep::domain::AbsState)
+    type AbsState; // := Host(domain::AbsState)
 
     /// The "bottom element" of the lattice of abstract states
     fn bottom : (Thk[0] 0 Ctx -> 0 F AbsState) = {
-        unsafe (1) trapdoor::bottom
+        hostfn (1) {
+            #(ctx : Ctx).
+            let b : AbsState = 
+                crate::sem::domain::bottom( &ctx );
+            fgi_rtval!( host b )
+        }
     }
 
     /// Test two abstract states for equality
@@ -32,7 +40,12 @@ fgi_mod!{
             0 AbsState -> 
             0 F Bool) = 
     {
-        unsafe (2) trapdoor::domain_eq
+        hostfn (2) {
+            #(s1 : AbsState).
+            #(s2 : AbsState).
+            let b : bool = s1 == s2;
+            fgi_rtval!( bool b )
+        }
     }
 
     /// The "transfer function" of the program semantics/analysis
@@ -42,7 +55,13 @@ fgi_mod!{
             0 Ctx -> 
             0 Stmt -> 
             0 F AbsState) = {
-        unsafe (3) trapdoor::transfer
+        hostfn (3) {
+            #(pre  : AbsState).
+            #(ctx  : Ctx).
+            #(stmt : Stmt).
+            let s : AbsState = crate::sem::domain::transfer( pre, &ctx, &stmt );
+            fgi_rtval!( host s )
+        }
     }
 }
 
@@ -56,7 +75,11 @@ pub fn typing() { fgi_listing_test!{
     ret 0
 }}
 
-// Representations for the program and its states' abstract domain
+/// Representations for the program and its states' abstract domain.
+///
+/// TODO: Finish this; use an existing (completed) implementation of
+/// the program expressions and statements.  The one below is a
+/// temporary sketch.
 pub mod rep {
     use std::rc::Rc;
 
@@ -98,40 +121,17 @@ pub mod rep {
         Update(String, Exp),        
     }
 
-    /// Abstract domain for the analysis
-    // TODO: Permit a compile-time flag to change the domain here:
-    // (I kind of wish that Rust had functors here!)
-    pub use crate::sem::dominator as domain;
-    //pub use crate::sem::octagon as domain;
 }
 
-mod trapdoor {
-    use super::rep;
-    use fungi_lang::dynamics::{RtVal,ExpTerm,ret};
-    use fungi_lang::hostobj::{rtval_of_obj, obj_of_rtval};
-    use super::rep::{Ctx,Stmt,domain::{AbsState}};
-        
-    pub fn bottom(args:Vec<RtVal>) -> ExpTerm {
-        assert_eq!(args.len(), 1);
-        let ctx : Ctx = obj_of_rtval( &args[0] ).unwrap();
-        ret(rtval_of_obj( rep::domain::bottom( &ctx ) ))
-    }
-
-    pub fn transfer(args:Vec<RtVal>) -> ExpTerm {
-        assert_eq!(args.len(), 3);
-        let pre  : AbsState = obj_of_rtval( &args[0] ).unwrap();
-        let ctx  : Ctx      = obj_of_rtval( &args[1] ).unwrap();
-        let stmt : Stmt     = obj_of_rtval( &args[2] ).unwrap();
-        ret(rtval_of_obj( rep::domain::transfer( pre, &ctx, &stmt ) ))
-    }
-
-    pub fn domain_eq(args:Vec<RtVal>) -> ExpTerm {
-        assert_eq!(args.len(), 2);
-        let s1  : AbsState = obj_of_rtval( &args[0] ).unwrap();
-        let s2  : AbsState = obj_of_rtval( &args[1] ).unwrap();
-        ret(RtVal::Bool( s1 == s2 ))
-    }
-}
+/// Abstract domain for the analysis
+// TODO: Permit a compile-time flag to change the domain here:
+// (I kind of wish that Rust had functors here!)
+//
+// ** Choose one of the following:
+//
+// pub use crate::sem::octagon as domain;
+pub use crate::sem::dominator as domain;
+//
 
 /// Example: Dominator analysis
 ///
@@ -148,7 +148,7 @@ pub mod dominator {
         if ctx == &1 { 
             vec![ 1 ]
         } else {
-            crate::cfg::example::all_ctxs()
+            crate::cfg::all_ctxs()
         }
     }
     
@@ -185,6 +185,10 @@ pub mod dominator {
 /// Example: Octagon analysis
 ///
 /// https://arxiv.org/pdf/cs/0703084.pdf
+///
+/// TODO: Finish this; use an existing (completed) implementation of
+/// this abstract domain.  The one below is a temporary sketch.
+///
 pub mod octagon {
     use std::rc::Rc;
 

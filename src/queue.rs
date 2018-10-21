@@ -29,14 +29,8 @@ fgi_mod!{
         hostfn (1) {
             #(mut q:Queue).
             match q.0.pop() {
-                None    => RtVal::Inj1(Rc::new(RtVal::Unit)),
-                Some(v) => {
-                    RtVal::Inj2(Rc::new(
-                        RtVal::Pair(
-                            Rc::new(fgi_rtval!( host q )),
-                            Rc::new(fgi_rtval!( host v ))
-                        )))
-                }
+                None    => fgi_rtval!( inj1() ),
+                Some(v) => fgi_rtval!( inj2(host q, host v) ),
             }
         }
     }
