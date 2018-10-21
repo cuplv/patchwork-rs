@@ -14,6 +14,9 @@ fgi_mod!{
     /// Analysis context set (or list, or collection, etc)
     type Ctxs; // := Host(rep::Ctxs)
 
+    /// Abstract state, e.g., an invariant that is (locally) true
+    type Stmt; // := Host(rep::Stmt)
+
     /// A set of successors consists of a statement for each possible target context
     type Succs; // := Host(rep::Succs);
     

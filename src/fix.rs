@@ -24,16 +24,16 @@ fgi_mod!{
                     0 Ctx -> 
                     0 F VisitRes[X]) = {
         #inv.#ctx.
-        let s1    : AbsState = {{force inv_get} inv ctx}
-        let preds : Preds    = {{force ctx_preds} ctx}
-        /// Join
-        let join  : AbsState = {{force inv_join} inv preds ctx}
-        if {{force domain_eq} s1 join} {
+        let s1    = {{force inv_get}[X] inv ctx}
+        let preds = {{force ctx_preds} ctx}
+        let join  = {{force inv_join}[X] inv preds ctx}
+        let test  = {{force domain_eq} s1 join}
+        if ( test ) {
             ret inj1 ()
         } else {
             // TODO: Choose a name somehow; do the (named) update.
-            /// Update
-            let inv = {{force inv_update} inv @1 ctx join}
+            let inv = {{force inv_update}[X][{@1}][X%{@1}] 
+                       inv (name @1) ctx join}
             ret inj2 inv
         }
     }

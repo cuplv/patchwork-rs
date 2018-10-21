@@ -48,7 +48,7 @@ fgi_mod!{
     }
     
     /// the immediate successors of the given analysis context
-    fn ctx_preds : (Thk[0] 0 Ctx -> 0 F Ctxs) = {
+    fn ctx_preds : (Thk[0] 0 Ctx -> 0 F Preds) = {
         hostfn (1) {
             #(ctx:Ctx).
             let preds : Preds = match ctx {
