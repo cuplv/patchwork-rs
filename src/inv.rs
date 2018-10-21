@@ -10,7 +10,7 @@ fgi_mod!{
     type Map; // := Host(Map)
     
     /// Invariant map; the refinement type tracks the set of named update operations
-    type Inv = (foralli (X):NmSet. Map);
+    type Inv = (foralli (X):NmSet. Map[X]);
     
     /// create the initial invariant map; no updates yet; names := empty set
     fn inv_init : (Thk[0] 0 F Inv[0]) = { 

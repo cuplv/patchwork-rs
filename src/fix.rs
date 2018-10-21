@@ -15,26 +15,37 @@ fgi_mod!{
     /// -------------------------------------------
 
     /// The result of visiting the next analysis context:
-    /// Either: no change, or an updated invariant map
-    type VisitRes = (foralli (X):NmSet. (+ Unit + Inv[X]));
-
+    /// Either: no change, or an updated invariant map, with a new name.
+    type VisitRes = (foralli (X1, X2):NmSet. 
+                     (+ Unit 
+                      + (x Inv[X1 % X2] 
+                         x Nm[X2])
+                     ));
+    
     // TODO: This type should return an Inv with an existentially-bound set of names
-    fn visit_ctx : (Thk[0] foralli (X):NmSet.
-                    0 Inv[X] -> 
-                    0 Ctx -> 
-                    0 F VisitRes[X]) = {
+    fn visit_ctx : (
+        Thk[0] foralli (X1):NmSet.
+            0 Inv[X1] -> 
+            0 Ctx -> 
+        // TODO: instead of the constant @1, use 
+        //       `exists (X2):NmSet | (X1 % X2).`
+            0 F VisitRes[X1][{@1}]
+    ) = {
         #inv.#ctx.
-        let s1    = {{force inv_get}[X] inv ctx}
         let preds = {{force ctx_preds} ctx}
-        let join  = {{force inv_join}[X] inv preds ctx}
+        let join  = {{force inv_join}[X1] inv preds ctx}
+        let s1    = {{force inv_get}[X1] inv ctx}
         let test  = {{force domain_eq} s1 join}
         if ( test ) {
             ret inj1 ()
         } else {
             // TODO: Choose a name somehow; do the (named) update.
-            let inv = {{force inv_update}[X][{@1}][X%{@1}] 
-                       inv (name @1) ctx join}
-            ret inj2 inv
+            let nm = {ret (name @1)}
+            let inv = {
+                {force inv_update}[X1][{@1}][X1%{@1}] 
+                    inv nm ctx join
+            }
+            ret inj2 (inv, nm)
         }
     }
 
@@ -42,10 +53,14 @@ fgi_mod!{
     /// --------------------------------------------------
        
     // TODO: This type should return an Inv with an existentially-bound set of names
-    fn do_work_queue : (Thk[0] foralli (X):NmSet.
-                      0 Inv[X] ->
-                      0 Queue ->
-                      0 F Inv[X]) = {
+    fn do_work_queue : (
+        Thk[0] foralli (X):NmSet.
+            0 Inv[X] ->
+            0 Queue ->
+        { {@!}({@1})    // TODO: Existential write set
+        ; {@!}({@1}) }  // TODO: Existential read set
+            F Inv[X % {@1}]
+    ) = {
         #inv.#q.
         let m = {{force queue_pop} q}
         match m {
@@ -55,10 +70,12 @@ fgi_mod!{
                 let m = {{force visit_ctx}[X] inv ctx}
                 match m {
                     /* NoChange */ _u  => {{force do_work_queue}[X] inv q}
-                    /* Changed */  inv => {
+                    /* Changed: New invariant name, with new name nm */  inv_nm => {
+                        let (inv, nm) = {ret inv_nm}
                         let ctxs = {{force ctx_succs} ctx}
                         let q    = {{force queue_push_all} q ctxs}
-                        {{force do_work_queue}[X] inv q}
+                        let (_r, r) = {memo (nm) {{force do_work_queue}[X % {@1}] inv q}}
+                        ret r
                     }
                 }
             }            
@@ -66,7 +83,12 @@ fgi_mod!{
     }
 
     // TODO: This return type needs an existential quantifier
-    fn run : (Thk[0] 0 F Inv[0]) = {
+    fn run : (
+        Thk[0] 
+        { {@!}({@1}) 
+        ; {@!}({@1}) }
+        F Inv[ {@1} ]) = 
+    {
         let inv  = {{force inv_init}}
         //let ctxs = {{force entry_ctxs}}
         let ctxs = {{force all_ctxs}}
