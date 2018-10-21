@@ -48,7 +48,7 @@ fgi_mod!{
         }
     }
 
-    /// Perform the transfer function on the given 
+    /// ???
     fn inv_join : (
         Thk[0] foralli (X):NmSet.
             0 Inv[X] -> 0 Preds -> 0 Ctx -> 0 F AbsState

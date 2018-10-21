@@ -75,7 +75,7 @@ fgi_mod!{
                         let (inv, nm) = {ret inv_nm}
                         let ctxs = {{force ctx_succs} ctx}
                         let q    = {{force queue_push_all} q ctxs}
-                        let (_r, r) = {memo (nm) {{force do_work_queue}[X % {@1}] inv q}}
+                        let (_r, r) = {memo (nm) {{force do_work_queue}[X % {@1}] inv q}} // <-- effect sequencing error; permitted by (known) bug in Fungi.
                         ret r
                     }
                 }

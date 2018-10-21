@@ -54,9 +54,9 @@ fgi_mod!{
     /// The "transfer function" of the program semantics/analysis
     fn transfer : (
         Thk[0] 
-            0 AbsState -> 
-            0 Ctx -> 
-            0 Stmt -> 
+            0 AbsState -> // join of all predecessors' states
+            0 Ctx ->      // context
+            0 Stmt ->     // ????
             0 F AbsState) = {
         hostfn (3) {
             #(pre  : AbsState).
