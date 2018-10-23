@@ -8,7 +8,7 @@ fgi_mod!{
     /// Invariant map representation
     open crate::inv;
     
-    /// Work queue representation
+    /// Work queue representation (avoids double insertions)
     open crate::queue;
 
     /// Transfer function (of the program analysis)
@@ -23,6 +23,7 @@ fgi_mod!{
                      ));
     
     // TODO: This type should return an Inv with an existentially-bound set of names
+    // https://github.com/Adapton/fungi-lang.rust/issues/12
     fn visit_ctx : (
         Thk[0] foralli (X1):NmSet.
             0 Inv[X1] -> 
@@ -36,6 +37,7 @@ fgi_mod!{
         let join  = {{force inv_join}[X1] inv preds ctx}
         let s1    = {{force inv_get}[X1] inv ctx}
         let test  = {{force domain_eq} s1 join}
+        /// Here
         if ( test ) {
             ret inj1 ()
         } else {
@@ -54,6 +56,7 @@ fgi_mod!{
     /// --------------------------------------------------
        
     // TODO: This type should return an Inv with an existentially-bound set of names
+    // https://github.com/Adapton/fungi-lang.rust/issues/12
     fn do_work_queue : (
         Thk[0] foralli (X):NmSet.
             0 Inv[X] ->
@@ -71,10 +74,10 @@ fgi_mod!{
                 let m = {{force visit_ctx}[X] inv ctx}
                 match m {
                     /* NoChange */ _u  => {{force do_work_queue}[X] inv q}
-                    /* Changed: New invariant name, with new name nm */  inv_nm => {
+                    /* Changed: Updated invariant map, with new name nm */  inv_nm => {
                         let (inv, nm) = {ret inv_nm}
-                        let ctxs = {{force ctx_succs} ctx}
-                        let q    = {{force queue_push_all} q ctxs}
+                        let ctxs    = {{force ctx_succs} ctx}
+                        let q       = {{force queue_push_all} q ctxs}
                         let (_r, r) = {memo (nm) {{force do_work_queue}[X % {@1}] inv q}} // <-- effect sequencing error; permitted by (known) bug in Fungi.
                         ret r
                     }
@@ -116,10 +119,5 @@ pub fn run() { fgi_dynamic_trace!{[Expect::SuccessXXX]
     {force run}
 }}
 
-/*  Try this:
- *  $ export FUNGI_VERBOSE_REDUCE=1
- *  $ cargo test test::reduction -- --nocapture | less -R
- *
- */
 #[test]
 pub fn reduction() { run() }

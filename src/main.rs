@@ -9,6 +9,12 @@ pub mod fix;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+/*  Try this:
+ *  $ export FUNGI_VERBOSE_REDUCE=1
+ *  $ cargo run | less -R
+ *
+ */
+
 fn main() {
     fix::run();    
 }

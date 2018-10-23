@@ -148,11 +148,14 @@ pub mod dominator {
     pub fn bottom(ctx:&Ctx) -> AbsState {
         // Bottom element: No information about the dominators,
         // except at the entry nodes.
+        /*
         if ctx == &1 { 
             vec![ 1 ]
         } else {
             crate::cfg::all_ctxs()
         }
+        */
+        vec![ ]
     }
     
     pub fn join(s1:AbsState, s2:AbsState) -> AbsState {
