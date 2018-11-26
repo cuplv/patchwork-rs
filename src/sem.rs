@@ -123,8 +123,8 @@ pub mod rep {
         /// Imperative variable update
         Update(String, Exp),
         //adding Incr and Decr to test interval
-        Incr(Exp),
-        Decr(Exp),
+        Incr,
+        Decr,
     }
 }
 
@@ -274,13 +274,13 @@ pub mod interval {
             //should bottom be pre? I think it should
             (Interval::IIInt, _ ) | (Interval::Bottom, _) => pre,
 
-            (Interval::IRInt(c), Stmt::Incr(_)) => Interval::IRInt(c+1),
-            (Interval::RIInt(c), Stmt::Incr(_)) => Interval::RIInt(c+1),
-            (Interval::RRInt(l,h), Stmt::Incr(_)) => Interval::RRInt(l+1, h+1),
+            (Interval::IRInt(c), Stmt::Incr) => Interval::IRInt(c+1),
+            (Interval::RIInt(c), Stmt::Incr) => Interval::RIInt(c+1),
+            (Interval::RRInt(l,h), Stmt::Incr) => Interval::RRInt(l+1, h+1),
 
-            (Interval::IRInt(c), Stmt::Decr(_)) => Interval::IRInt(c-1),
-            (Interval::RIInt(c), Stmt::Decr(_)) => Interval::RIInt(c-1),
-            (Interval::RRInt(l,h), Stmt::Decr(_)) => Interval::RRInt(l-1, h-1),
+            (Interval::IRInt(c), Stmt::Decr) => Interval::IRInt(c-1),
+            (Interval::RIInt(c), Stmt::Decr) => Interval::RIInt(c-1),
+            (Interval::RRInt(l,h), Stmt::Decr) => Interval::RRInt(l-1, h-1),
         }
     }
 }
