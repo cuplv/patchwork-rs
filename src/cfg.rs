@@ -9,7 +9,7 @@ use crate::sem::rep::{Ctx,Ctxs,Preds,Stmt};
 //
 
 pub fn all_ctxs () -> Ctxs {
-    vec![ 1, 2, 3, 4, 5 ]
+    vec![ 0, 1, 2, 3, 4, 5 ]
 }
 
 fgi_mod!{
@@ -36,10 +36,11 @@ fgi_mod!{
         hostfn (1) {
             #(ctx:Ctx).
             let succs = match ctx {
+                0 => vec![ 1 ],
                 1 => vec![ 2, 3 ],
-                2 => vec![ 4 ],
+                2 => vec![ 4, 1 ],
                 3 => vec![ 4 ],
-                4 => vec![ 1, 5 ],
+                4 => vec![ 5 ],
                 // all other nodes are undefined; they have no successors
                 _ => vec![],
             };
@@ -52,9 +53,10 @@ fgi_mod!{
         hostfn (1) {
             #(ctx:Ctx).
             let preds : Preds = match ctx {
-                1 => vec![  ],
-                2 => vec![ (1, Stmt::AssertEq(crate::sem::rep::Exp::Num(5), crate::sem::rep::Exp::Num(5))) ],
-                3 => vec![ (1, Stmt::AssertEq(crate::sem::rep::Exp::Num(5), crate::sem::rep::Exp::Num(5))) ],
+                1 => vec![ (0, Stmt::Set(0)),
+                            (2, Stmt::Nop) ],
+                2 => vec![ (1, Stmt::AssertEq(crate::sem::rep::Exp::Var("x".to_string()), crate::sem::rep::Exp::Num(0))) ],
+                3 => vec![ (1, Stmt::AssertNeq(crate::sem::rep::Exp::Var("x".to_string()), crate::sem::rep::Exp::Num(0))) ],
                 4 => vec![ (2, Stmt::Incr),
                             (3, Stmt::Decr) ],
                 5 => vec![ (4, Stmt::Nop) ],

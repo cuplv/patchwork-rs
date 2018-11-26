@@ -125,6 +125,7 @@ pub mod rep {
         //adding Incr and Decr to test interval
         Incr,
         Decr,
+        Set(usize),
     }
 }
 
@@ -271,6 +272,7 @@ pub mod interval {
         match (pre.clone(), stmt.clone()) {
             (_, Stmt::Nop) | (_, Stmt::AssertEq(_, _)) |
             (_, Stmt::AssertNeq(_, _)) | (_, Stmt::Update(_, _)) => pre,
+            (_, Stmt::Set(n)) => Interval::RRInt(n, n),
             //should bottom be pre? I think it should
             (Interval::IIInt, _ ) | (Interval::Bottom, _) => pre,
 

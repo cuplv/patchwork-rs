@@ -94,8 +94,8 @@ fgi_mod!{
         F Inv[ {@1} ]) =
     {
         let inv  = {{force inv_init}}
-        //let ctxs = {{force entry_ctxs}}
-        let ctxs = {{force all_ctxs}}
+        let ctxs = {{force entry_ctxs}}
+        //let ctxs = {{force all_ctxs}}
         let q    = {{force queue_empty}}
         let q    = {{force queue_push_all} q ctxs}
         let res  = {{force do_work_queue} [0] inv q}
