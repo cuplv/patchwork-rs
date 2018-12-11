@@ -9,3 +9,8 @@ adapton = "0.3"
 fungi-lang = "0.1.63"
 #fungi-lang = { path = "../fungi-lang.rust" }
 regex = "0.2"
+gmp-mpfr-sys = "1.1.9"
+libc = "0.2.0"
+
+[build-dependencies]
+cc = "1.0"

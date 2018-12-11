@@ -11,3 +11,7 @@ Cargo.lock
 
 # Emacs back up files
 *~
+#*#
+
+# Apron svn meta-information
+apron/.svn
