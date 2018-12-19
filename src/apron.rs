@@ -9,8 +9,44 @@ type ap_manager_t = *mut __ap_manager_t;
 enum __box_t {}
 pub type box_t = *mut __box_t;
 
-enum __ap_interval_t {}
-type ap_interval_t = *mut __ap_interval_t;
+#[repr(C)]
+struct __itv_t {
+    inf: bound_t, //NB: to match APRON internal representation, `inf` is the _negation_ of the infimum
+    sup: bound_t
+} type itv_t = *mut __itv_t;
+
+#[repr(C)]
+struct ap_interval_t {
+    inf: *mut ap_scalar_t,
+    sup: *mut ap_scalar_t
+}
+
+#[repr(C)]
+struct mpfr {} type mpfr_ptr = *mut mpfr;
+#[repr(C)]
+struct __itv_internal_t {} type itv_internal_t = *mut __itv_internal_t;
+#[repr(C)]
+struct __bound_t {} type bound_t = *mut __bound_t;
+
+#[repr(C)]
+union scalar_val  {
+    dbl: libc::c_double,
+    mpq_ptr: bound_t,
+    mpfr_ptr: mpfr
+}
+
+#[repr(C)]
+struct ap_scalar_t {
+    discr: ap_scalar_discr_t,
+    val: scalar_val
+}
+
+#[repr(C)]
+enum ap_scalar_discr_t {
+    AP_SCALAR_DOUBLE,
+    AP_SCALAR_MPQ,
+    AP_SCALAR_MPFR
+}
 
 extern {
     fn box_manager_alloc () -> ap_manager_t;
@@ -36,7 +72,7 @@ extern {
         man: ap_manager_t,
         intdim: libc::size_t,
         realdim: libc::size_t,
-        tinterval: *mut ap_interval_t
+        tinterval: *mut *mut ap_interval_t
     ) -> box_t;
     
     fn box_join(
@@ -65,42 +101,131 @@ extern {
         b2: box_t
     ) -> bool;
 
-    fn ap_interval_alloc() -> ap_interval_t;
-    fn ap_interval_free(itv: ap_interval_t) -> ();
-    fn ap_interval_print(itv: ap_interval_t) -> ();
+    fn ap_interval_alloc() -> *mut ap_interval_t;
+    fn ap_interval_free(itv: *mut ap_interval_t) -> ();
+    fn ap_interval_print(itv: *mut ap_interval_t) -> ();
     
     fn ap_interval_set_int(
-        itv: ap_interval_t,
+        itv: *mut ap_interval_t,
         inf: i64,
         sup: i64
-    ) -> ap_interval_t;    
+    ) -> ();
+
+
+    fn itv_internal_alloc() -> itv_internal_t;
+    fn itv_internal_free(intern: itv_internal_t) -> ();
+    fn itv_add(a: itv_t, b: itv_t, c: itv_t) -> ();
+    fn itv_neg(a: itv_t, b: itv_t) -> ();
+    fn itv_array_alloc(size: libc::size_t) -> itv_t;
+    fn itv_array_free(a: itv_t, size: libc::size_t) -> ();
+    fn itv_set_ap_interval(intern: itv_internal_t, dest: itv_t, src: *mut ap_interval_t) -> bool;
+    fn ap_interval_set_itv(intern: itv_internal_t, dest: *mut ap_interval_t, src: itv_t) -> bool;
+    fn itv_print(itv: itv_t) -> ();
+
+    fn box_copy(man: ap_manager_t, b: box_t) -> box_t;
+
+    fn box_bound_dimension(
+        man: ap_manager_t,
+        b: box_t,
+        dim: u32
+    ) -> *mut ap_interval_t;
+
+    fn ap_scalar_neg(target: *mut ap_scalar_t, source: *mut ap_scalar_t) -> ();
+    fn ap_scalar_alloc() -> *mut ap_scalar_t;
+    fn ap_scalar_fprint_stdout(scalar: *mut ap_scalar_t) -> ();
+}
+
+
+fn box_bottom_1d() -> box_t {
+    unsafe { box_man.with(|man| box_bottom(*man,1,0)) }
+}
+
+fn box_top_1d() -> box_t {
+    unsafe { box_man.with(|man| box_top(*man,1,0)) }
 }
 
 fn box_new_1d(inf: i64, sup: i64) -> box_t {
     unsafe {
-        let mut itv = ap_interval_alloc();
+        let mut itv: *mut ap_interval_t = ap_interval_alloc();
         ap_interval_set_int(itv,inf,sup);
-        box_man.with(|man|
-                     box_of_box(*man,1,0, &mut itv)
-        )
+        let result = box_man.with(|man| box_of_box(*man,1,0, &mut itv) );
+
+        ap_interval_free(itv);
+
+        result
     }
 }
 
+fn box_add(l:box_t, r:box_t) -> box_t {
+    box_man.with(|man| {unsafe{
+        let l_interval = box_bound_dimension(*man, l, 0);
+        let r_interval = box_bound_dimension(*man, r, 0);
+        let mut new_interval = ap_interval_alloc();
+        let (mut l_itv, mut r_itv, mut new_itv) = (itv_array_alloc(1), itv_array_alloc(1), itv_array_alloc(1));
+        let intern = itv_internal_alloc();
+
+        itv_set_ap_interval(intern, l_itv, l_interval);
+        itv_set_ap_interval(intern, r_itv, r_interval);
+        itv_add(new_itv, l_itv, r_itv);
+        ap_interval_set_itv(intern, new_interval, new_itv);
+        let result = box_of_box(*man, 1, 0, &mut new_interval);
+
+        itv_array_free(l_itv, 1);
+        itv_array_free(r_itv, 1);
+        itv_array_free(new_itv, 1);
+        itv_internal_free(intern);
+        ap_interval_free(l_interval);
+        ap_interval_free(r_interval);
+        ap_interval_free(new_interval);
+
+        result
+    }})
+}
+
+fn box_negate(b:box_t) -> box_t {
+    box_man.with(|man| {unsafe{
+        let b_interval = box_bound_dimension(*man, b, 0);
+        let mut new_interval = ap_interval_alloc();
+        let mut b_itv = itv_array_alloc(1);
+        let mut new_itv = itv_array_alloc(1);
+        let intern = itv_internal_alloc();
+        itv_set_ap_interval(intern, b_itv, b_interval);
+        itv_neg(new_itv, b_itv);
+        ap_interval_set_itv(intern, new_interval, new_itv);
+        let result = box_of_box(*man,1,0,&mut new_interval);
+
+        itv_array_free(b_itv,1);
+        itv_array_free(new_itv,1);
+        itv_internal_free(intern);
+        ap_interval_free(new_interval);
+        ap_interval_free(b_interval);
+
+        result
+    }})
+}
+
+fn clone(b: box_t) -> box_t {
+    unsafe {box_man.with(|man| {
+        box_copy(*man, b)
+    })}
+}
+
+
 pub fn test_boxes() {
     unsafe {box_man.with(|man| {
-        box_fdump_stdout(*man, box_bottom(*man,1,0));
-        box_fdump_stdout(*man, box_top(*man,1,0));
         box_fdump_stdout(*man, box_new_1d(2, 5));
-    })}
+        box_fdump_stdout(*man, box_negate(box_new_1d(2,5)));
+        box_fdump_stdout(*man, box_add(box_new_1d(2,5), box_new_1d(2,5)));
+    })}}
 
-}
 thread_local! {
     static box_man: ap_manager_t = unsafe{box_manager_alloc()};
 }
 
 pub mod interval {
     use crate::sem::rep::{Stmt, Ctx, Exp};
-    use std::collections::{HashMap};
+    use std::collections::HashMap;
+    use std::rc::Rc;
     use crate::apron;
     
     #[derive(Clone,Debug)]
@@ -178,7 +303,30 @@ pub mod interval {
         }
     }
 
-    fn abstract_eval(exp:Exp, inv:&Invariant) -> apron::box_t {panic!("TODO")}
+    fn abstract_eval(exp:Exp, inv:&Invariant) -> apron::box_t {
+        match exp {
+            Exp::Num(n)     => apron::box_new_1d(n as i64, n as i64),
+            Exp::Var(v)     => invariant_get(inv, &v),
+            Exp::Neg(e)     => {
+                let subexpr = match Rc::try_unwrap(e) {
+                    Ok(se) => se,
+                    Err(_) => panic!("RC cell error in subexpression")
+                };
+                let subexpr_box = abstract_eval(subexpr,inv);
+                apron::box_negate(subexpr_box)
+            },
+            Exp::Plus(l, r) => {
+                let (l_expr,r_expr) = match (Rc::try_unwrap(l),Rc::try_unwrap(r)) {
+                    (Ok(l_subexpr),Ok(r_subexpr)) => (l_subexpr, r_subexpr),
+                    _ => panic!("RC cell error in subexpression")
+                };
+                let l_box = abstract_eval(l_expr, inv);
+                let r_box = abstract_eval(r_expr, inv);
+                apron::box_add(l_box, r_box)
+
+            }
+        }
+    }
 
     fn invariant_insert(inv:Invariant, key:String, value:apron::box_t) -> Invariant {
         match inv {
@@ -190,6 +338,13 @@ pub mod interval {
             }
         }
     }
-    
+
+    fn invariant_get(inv:&Invariant, key:&String) -> apron::box_t {
+        match inv {
+            Invariant::Top => apron::box_top_1d(),
+            Invariant::Bottom => apron::box_bottom_1d(),
+            Invariant::Inv(env) => *env.get(key).unwrap_or(&apron::box_bottom_1d())
+        }
+    }
 }
     

@@ -1,5 +1,6 @@
 #![recursion_limit="128"]
 #![feature(libc)]
+#![feature(untagged_unions)]
 #[macro_use] extern crate fungi_lang;
 
 pub mod sem;

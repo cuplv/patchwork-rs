@@ -66,9 +66,9 @@ typedef struct itv_internal_t {
 } itv_internal_t;
 
 
-static inline itv_internal_t* itv_internal_alloc(void);
+  itv_internal_t* itv_internal_alloc(void); // BENNO: lifted this out of static inline
   /* Allocate and initialize internal workspace */
-static inline void itv_internal_free(itv_internal_t* intern);
+  void itv_internal_free(itv_internal_t* intern); // BENNO: lifted this out of static inline
   /* Clear and free internal workspace */
 
 static inline void itv_internal_init(itv_internal_t* intern);
@@ -85,8 +85,8 @@ static inline void itv_init_array(itv_t* a, size_t size);
 static inline void itv_init_set(itv_t a, itv_t b);
 static inline void itv_clear(itv_t a);
 static inline void itv_clear_array(itv_t* a, size_t size);
-static inline itv_t* itv_array_alloc(size_t size);
-static inline void itv_array_free(itv_t* a, size_t size);
+itv_t* itv_array_alloc(size_t size); // BENNO: lifted this out of static inline
+void itv_array_free(itv_t* a, size_t size); // BENNO: lifted this out of static inline
 
 /* Assignement */
 static inline void itv_set(itv_t a, itv_t b);
@@ -148,9 +148,9 @@ static inline void itv_widening(itv_t a, itv_t b, itv_t c);
   /* Assign a with the standard interval widening of b by c */
 
 /* Arithmetic operations */
-static inline void itv_add(itv_t a, itv_t b, itv_t c);
+  void itv_add(itv_t a, itv_t b, itv_t c);// BENNO: undid static inline to make available in rust
 static inline void itv_sub(itv_t a, itv_t b, itv_t c);
-static inline void itv_neg(itv_t a, itv_t b);
+   void itv_neg(itv_t a, itv_t b);// BENNO: undid static inline to make available in rust
 static inline void itv_mul(itv_internal_t* intern, itv_t a, itv_t b, itv_t c);
 static inline void itv_div(itv_internal_t* intern, itv_t a, itv_t b, itv_t c);
 static inline void itv_add_num(itv_t a, itv_t b, num_t c);
@@ -192,19 +192,19 @@ static inline void itv_from_double(itv_t a, itv_t b);
 /* Printing */
 static inline int itv_snprint(char* s, size_t size, itv_t a);
 static inline void itv_fprint(FILE* stream, itv_t a);
-static inline void itv_print(itv_t a);
+void itv_print(itv_t a); // BENNO: lifted this out of static inline
 
 /* All these functions return true if the conversion is exact */
 static inline bool itv_set_ap_scalar(itv_internal_t* intern, itv_t a, ap_scalar_t* b);
   /* Convert a ap_scalar_t into a itv_t.
      Assumes the scalar is finite.
      If it returns true, the interval is a single point */
-static inline bool itv_set_ap_interval(itv_internal_t* intern, itv_t a, ap_interval_t* b);
+bool itv_set_ap_interval(itv_internal_t* intern, itv_t a, ap_interval_t* b); // BENNO: lifted this out of static inline
   /* Convert a ap_interval_t into a itv_t */
 static inline bool itv_set_ap_coeff(itv_internal_t* intern, itv_t a, ap_coeff_t* b);
   /* Convert a ap_coeff_t into a itv_t. */
 
-static inline bool ap_interval_set_itv(itv_internal_t* intern, ap_interval_t* a, itv_t b);
+bool ap_interval_set_itv(itv_internal_t* intern, ap_interval_t* a, itv_t b); // BENNO: lifted this out of static inline
   /* Convert a itv_t into a ap_interval_t */
 
 static inline bool ap_coeff_set_itv(itv_internal_t* intern, ap_coeff_t* a, itv_t b);
@@ -262,11 +262,11 @@ static inline void itv_internal_init(itv_internal_t* intern)
 static inline void itv_internal_clear(itv_internal_t* intern)
 { ITVFUN(itv_internal_clear)(intern); }
 
-static inline itv_internal_t* itv_internal_alloc(void)
-{ return ITVFUN(itv_internal_alloc)(); }
+//static inline itv_internal_t* itv_internal_alloc(void)
+//{ return ITVFUN(itv_internal_alloc)(); }
 
-static inline void itv_internal_free(itv_internal_t* intern)
-{ ITVFUN(itv_internal_free)(intern); }
+//static inline void itv_internal_free(itv_internal_t* intern)
+//{ ITVFUN(itv_internal_free)(intern); }
 
 static inline bool itv_canonicalize(itv_internal_t* intern,
  itv_t a, bool integer)
@@ -287,8 +287,8 @@ static inline void itv_div_bound(itv_t a, itv_t b, bound_t c)
 static inline void itv_sub(itv_t a, itv_t b, itv_t c)
 { ITVFUN(itv_sub)(a,b,c); }
 
-static inline void itv_neg(itv_t a, itv_t b)
-{ ITVFUN(itv_neg)(a,b); }
+//static inline void itv_neg(itv_t a, itv_t b)
+//{ ITVFUN(itv_neg)(a,b); }
 
 static inline void itv_mul(itv_internal_t* intern, itv_t a, itv_t b, itv_t c)
 { ITVFUN(itv_mul)(intern,a,b,c); }
@@ -298,8 +298,8 @@ static inline void itv_div(itv_internal_t* intern, itv_t a, itv_t b, itv_t c)
 
 static inline void itv_fprint(FILE* stream, itv_t a)
 { ITVFUN(itv_fprint)(stream,a); }
-static inline void itv_print(itv_t itv)
-{ ITVFUN(itv_print)(itv); }
+//static inline void itv_print(itv_t itv)
+//{ ITVFUN(itv_print)(itv); }
 
 static inline int itv_snprint(char* s, size_t size, itv_t a)
 { return ITVFUN(itv_snprint)(s,size,a); }
@@ -307,14 +307,14 @@ static inline int itv_snprint(char* s, size_t size, itv_t a)
 static inline bool itv_set_ap_scalar(itv_internal_t* intern, itv_t a, ap_scalar_t* b)
 { return ITVFUN(itv_set_ap_scalar)(intern,a,b); }
 
-static inline bool itv_set_ap_interval(itv_internal_t* intern, itv_t a, ap_interval_t* b)
-{ return ITVFUN(itv_set_ap_interval)(intern,a,b); }
+//static inline bool itv_set_ap_interval(itv_internal_t* intern, itv_t a, ap_interval_t* b)
+//{ return ITVFUN(itv_set_ap_interval)(intern,a,b); }
 
 static inline bool itv_set_ap_coeff(itv_internal_t* intern, itv_t itv, ap_coeff_t* coeff)
 { return ITVFUN(itv_set_ap_coeff)(intern,itv,coeff); }
 
-static inline bool ap_interval_set_itv(itv_internal_t* intern, ap_interval_t* a, itv_t b)
-{ return ITVFUN(ap_interval_set_itv)(intern,a,b); }
+//static inline bool ap_interval_set_itv(itv_internal_t* intern, ap_interval_t* a, itv_t b)
+//{ return ITVFUN(ap_interval_set_itv)(intern,a,b); }
 
 static inline bool ap_coeff_set_itv(itv_internal_t* intern, ap_coeff_t* a, itv_t b)
 { return ITVFUN(ap_coeff_set_itv)(intern,a,b); }
@@ -351,17 +351,17 @@ static inline void itv_clear_array(itv_t* a, size_t size)
   for (i=0; i<size; i++) itv_clear(a[i]);
 #endif
 }
-static inline itv_t* itv_array_alloc(size_t size)
-{
-  itv_t* res = (itv_t*)malloc(size*sizeof(itv_t));
-  itv_init_array(res,size);
-  return res;
-}
-static inline void itv_array_free(itv_t* a, size_t size)
-{
-  itv_clear_array(a,size);
-  free(a);
-}
+//static inline itv_t* itv_array_alloc(size_t size)
+//{
+//  itv_t* res = (itv_t*)malloc(size*sizeof(itv_t));
+//  itv_init_array(res,size);
+//  return res;
+//}
+//static inline void itv_array_free(itv_t* a, size_t size)
+//{
+//  itv_clear_array(a,size);
+//  free(a);
+//}
 
 static inline void itv_set(itv_t a, itv_t b)
 {
@@ -504,11 +504,11 @@ static inline void itv_widening(itv_t a, itv_t b, itv_t c)
     bound_widening(a->inf,b->inf,c->inf);
   }
 }
-static inline void itv_add(itv_t a, itv_t b, itv_t c)
-{
-  bound_add(a->sup,b->sup,c->sup);
-  bound_add(a->inf,b->inf,c->inf);
-}
+//static inline void itv_add(itv_t a, itv_t b, itv_t c)
+//{
+//  bound_add(a->sup,b->sup,c->sup);
+//  bound_add(a->inf,b->inf,c->inf);
+//}
 static inline void itv_add_num(itv_t a, itv_t b, num_t c)
 {
   bound_add_num(a->sup,b->sup,c);

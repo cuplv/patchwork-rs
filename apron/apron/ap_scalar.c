@@ -43,6 +43,10 @@ void ap_scalar_free(ap_scalar_t* scalar)
 
 int ap_scalar_print_prec = 20;
 
+void ap_scalar_fprint_stdout(ap_scalar_t* a){
+  ap_scalar_fprint(stdout, a);
+}
+
 void ap_scalar_fprint(FILE* stream, ap_scalar_t* a)
 {
   int flag;

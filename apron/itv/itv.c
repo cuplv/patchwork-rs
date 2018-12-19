@@ -778,3 +778,39 @@ bool ITVFUN(itv_array_set_ap_interval_array)(itv_internal_t* intern,
   *ptitv = titv;
   return res;
 }
+
+void itv_add(itv_t a, itv_t b, itv_t c)
+{
+  bound_add(a->sup,b->sup,c->sup);
+  bound_add(a->inf,b->inf,c->inf);
+}
+void itv_neg(itv_t a, itv_t b)
+{ ITVFUN(itv_neg)(a,b); }
+
+itv_internal_t* itv_internal_alloc(void)
+{ return ITVFUN(itv_internal_alloc)(); }
+
+void itv_internal_free(itv_internal_t* intern)
+{ return ITVFUN(itv_internal_free)(intern); }
+
+itv_t* itv_array_alloc(size_t size)
+{
+  itv_t* res = (itv_t*)malloc(size*sizeof(itv_t));
+  itv_init_array(res,size);
+  return res;
+}
+
+void itv_array_free(itv_t* a, size_t size)
+{
+  itv_clear_array(a,size);
+  free(a);
+}
+
+bool itv_set_ap_interval(itv_internal_t* intern, itv_t a, ap_interval_t* b)
+{ return ITVFUN(itv_set_ap_interval)(intern,a,b); }
+
+bool ap_interval_set_itv(itv_internal_t* intern, ap_interval_t* a, itv_t b)
+{ return ITVFUN(ap_interval_set_itv)(intern,a,b); }
+
+ void itv_print(itv_t itv)
+{ ITVFUN(itv_print)(itv); }
