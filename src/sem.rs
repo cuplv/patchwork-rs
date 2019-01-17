@@ -36,6 +36,15 @@ fgi_mod!{
         }
     }
 
+    /// The "initial element" of the lattice of abstract states, used to initialize the invariant map at the entry context.
+    fn init_absstate : (Thk[0] 0 F AbsState) = {
+        hostfn (0) {
+            let b : AbsState =
+                crate::sem::domain::init_absstate();
+            fgi_rtval!( host b )
+        }
+    }
+
     /// Test two abstract states for equality
     fn domain_eq : (
         Thk[0]
@@ -137,7 +146,7 @@ pub mod rep {
 //
 // pub use crate::sem::octagon as domain;
 // pub use crate::sem::dominator as domain;
-pub use crate::sem::interval as domain;
+pub use crate::apron::interval as domain;
 //
 
 /// Example: Dominator analysis

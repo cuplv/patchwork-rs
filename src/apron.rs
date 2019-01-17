@@ -224,14 +224,14 @@ thread_local! {
 
 pub mod interval {
     use crate::sem::rep::{Stmt, Ctx, Exp};
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
     use std::rc::Rc;
     use crate::apron;
     
-    #[derive(Clone,Debug)]
+    #[derive(Clone,Debug,Hash)]
     pub enum Invariant {
         Bottom,
-        Inv(HashMap<String, apron::box_t>),
+        Inv(BTreeMap<String, apron::box_t>),
         Top,
     }
     
@@ -258,8 +258,11 @@ pub mod interval {
     
     impl Eq for Invariant {}
 
-    pub fn bottom(_ctx : Ctx) -> AbsState {
+    pub fn bottom(_ctx : &Ctx) -> AbsState {
         Invariant::Bottom
+    }
+    pub fn init_absstate() -> AbsState {
+        Invariant::Inv(BTreeMap::new())
     }
 
     pub fn join(phi1: AbsState, phi2: AbsState) -> AbsState {
@@ -271,7 +274,7 @@ pub mod interval {
             (Invariant::Top,_) | (_, Invariant::Top) => Invariant::Top,
             
             (Invariant::Inv(inv1), Invariant::Inv(inv2)) => {
-                let mut new_inv : HashMap<String, apron::box_t> = HashMap::new();
+                let mut new_inv : BTreeMap<String, apron::box_t> = BTreeMap::new();
                 for (key, value) in inv1.iter() {
                     new_inv.insert(key.to_owned(), *value);
                 }

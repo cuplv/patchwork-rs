@@ -89,16 +89,18 @@ fgi_mod!{
     // TODO: This return type needs an existential quantifier
     fn run : (
         Thk[0]
-        { {@!}({@1})
-        ; {@!}({@1}) }
-        F Inv[ {@1} ]) =
+        { {@!}({@0}%{@1})
+        ; {@!}({@0}%{@1}) }
+        F Inv[ {@0}%{@1} ]) =
     {
-        let inv  = {{force inv_init}}
-        let ctxs = {{force entry_ctxs}}
-        //let ctxs = {{force all_ctxs}}
+        let ctx = {{force entry_ctx}}
+        let empty_inv = {{force inv_init}}
+        let entry_absstate = {{force init_absstate}}
+        let entry_nm = {ret (name @0)}
+        let inv  = {{force inv_update}[0][{@0}][{@0}] empty_inv entry_nm ctx entry_absstate }
         let q    = {{force queue_empty}}
-        let q    = {{force queue_push_all} q ctxs}
-        let res  = {{force do_work_queue} [0] inv q}
+        let q    = {{force queue_push} q ctx}
+        let res  = {{force do_work_queue} [{@0}] inv q}
         ret res
     }
 }

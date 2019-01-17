@@ -15,12 +15,9 @@ pub fn all_ctxs () -> Ctxs {
 fgi_mod!{
     open crate::sem;
 
-    /// the entry points into the program to analyze
-    fn entry_ctxs : (Thk[0] 0 F Ctxs) = {
-        hostfn (0) {
-            let ctxs : Ctxs = vec![ 1 ];
-            fgi_rtval!( host ctxs )
-        }
+    /// the entry point into the program to analyze
+    fn entry_ctx : (Thk[0] 0 F Ctx) = {
+        ret 1
     }
 
     /// all of the points of the program to analyze
@@ -57,8 +54,10 @@ fgi_mod!{
                             (2, Stmt::Nop) ],
                 2 => vec![ (1, Stmt::AssertEq(crate::sem::rep::Exp::Var("x".to_string()), crate::sem::rep::Exp::Num(0))) ],
                 3 => vec![ (1, Stmt::AssertNeq(crate::sem::rep::Exp::Var("x".to_string()), crate::sem::rep::Exp::Num(0))) ],
-                4 => vec![ (2, Stmt::Incr),
-                            (3, Stmt::Decr) ],
+                4 => vec![ (2, Stmt::Update("x".to_string(),
+                                            crate::sem::rep::Exp::Plus(Rc::new(crate::sem::rep::Exp::Var("x".to_string())), Rc::new(crate::sem::rep::Exp::Num(1))) )),
+                           (3, Stmt::Update("x".to_string(),
+                                            crate::sem::rep::Exp::Plus(Rc::new(crate::sem::rep::Exp::Var("x".to_string())), Rc::new(crate::sem::rep::Exp::Num(2))) )) ],
                 5 => vec![ (4, Stmt::Nop) ],
                 // all other nodes are undefined; they have no successors
                 _ => vec![],
